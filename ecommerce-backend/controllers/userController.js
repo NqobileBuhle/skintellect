@@ -1,4 +1,5 @@
 import { loginSchema, registerSchema, updateUserSchema } from "../schemas/userSchema.js";
+import User from "../model/userModel.js";
 
 // Login
 export const userAuth = asyncHandler(async (req, res) => {
