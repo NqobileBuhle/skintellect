@@ -3,12 +3,12 @@ import admin from "../middleware/adminMiddleware.js";
 import {
     registerUser,
     userAuth,
-    getAllUsers,
-    getUserProfile,
-    updateUserProfile,
-    logoutUser,
-    updateUserRole,
-    deleteUser,
+   
+    // getUserProfile,
+    // updateUserProfile,
+    // logoutUser,
+    // updateUserRole,
+    
   } from "../controllers/userController.js"; // Corrected
 
   const router=Router();

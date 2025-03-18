@@ -1,4 +1,5 @@
-import { loginSchema, registerSchema, updateUserSchema } from "../schemas/userSchema.js";
+import { loginSchema, registerSchema } from "../schemas/authSchema.js";
+// import {updateUserSchema} from "../schemas/updateUserSchema.js";
 import User from "../model/userModel.js";
 
 // Login
@@ -13,25 +14,25 @@ export const userAuth = asyncHandler(async (req, res) => {
   const { email, password } = parsed.data;
   const user = await user.findOne({ email });
 
-  if (!user) {
+  if (!User) {
     res.status(401);
     throw new Error("Invalid email or password");
   }
 
-  const isMatch = await user.matchPassword(password);
+  const isMatch = await User.matchPassword(password);
   if (!isMatch) {
     res.status(401);
     throw new Error("Invalid email or password");
   }
 
-  generateToken(res, user._id);
+  generateToken(res, User._id);
 
   res.status(200).json({
-    _id: user._id,
-    email: user.email,
-    username: user.username,
-    role: user.role,
-    status: user.status,
+    _id: User._id,
+    email: User.email,
+    username: User.username,
+    role: User.role,
+    status: User.status,
   });
 });
 //register user
@@ -45,7 +46,7 @@ export const registerUser = asyncHandler(async (req, res) => {
 
   const { email, username, password, role, status } = parsed.data;
 
-  const existingUser = await user.findOne({ email });
+  const existingUser = await User.findOne({ email });
   if (existingUser) {
     res.status(400);
     throw new Error("Email is already in use");
@@ -54,7 +55,7 @@ export const registerUser = asyncHandler(async (req, res) => {
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  const user = await user.create({
+  const User = await User.create({
     email,
     username,
     password: hashedPassword,
@@ -62,13 +63,13 @@ export const registerUser = asyncHandler(async (req, res) => {
     status,
   });
 
-  if (user) {
+  if (User) {
     res.status(201).json({
-      _id: user._id,
-      email: user.email,
-      username: user.username,
-      role: user.role,
-      status: user.status,
+      _id: User._id,
+      email: User.email,
+      username: User.username,
+      role: User.role,
+      status: User.status,
     });
   } else {
     res.status(400);
