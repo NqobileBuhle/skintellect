@@ -1,6 +1,7 @@
 import { loginSchema, registerSchema } from "../schemas/authSchema.js";
 // import {updateUserSchema} from "../schemas/updateUserSchema.js";
 import User from "../model/userModel.js";
+import asyncHandler from "express-async-handler";
 
 // Login
 export const userAuth = asyncHandler(async (req, res) => {
@@ -35,47 +36,64 @@ export const userAuth = asyncHandler(async (req, res) => {
     status: User.status,
   });
 });
-//register user
+
+// register user
 export const registerUser = asyncHandler(async (req, res) => {
-  const parsed = registerSchema.safeParse(req.body);
+  try {
+    const parsed = registerSchema.safeParse(req.body);
 
-  if (!parsed.success) {
-    res.status(400);
-    throw new Error(parsed.error.issues[0].message);
-  }
+    if (!parsed.success) {
+      res.status(400).json({
+        message: parsed.error.issues[0].message,
+        stack: new Error(parsed.error.issues[0].message).stack,
+      });
+      return;
+    }
 
-  const { email, username, password, role, status } = parsed.data;
+    const { email, username, password, role, status } = parsed.data;
 
-  const existingUser = await User.findOne({ email });
-  if (existingUser) {
-    res.status(400);
-    throw new Error("Email is already in use");
-  }
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      res.status(400).json({
+        message: "Email is already in use",
+        stack: new Error("Email is already in use").stack,
+      });
+      return;
+    }
 
-  const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-  const User = await User.create({
-    email,
-    username,
-    password: hashedPassword,
-    role,
-    status,
-  });
-
-  if (User) {
-    res.status(201).json({
-      _id: User._id,
-      email: User.email,
-      username: User.username,
-      role: User.role,
-      status: User.status,
+    const newUser = await User.create({
+      email,
+      username,
+      password: hashedPassword,
+      role,
+      status,
     });
-  } else {
-    res.status(400);
-    throw new Error("Failed to create user");
+
+    if (newUser) {
+      res.status(201).json({
+        _id: newUser._id,
+        email: newUser.email,
+        username: newUser.username,
+        role: newUser.role,
+        status: newUser.status,
+      });
+    } else {
+      res.status(400).json({
+        message: "Failed to create user",
+        stack: new Error("Failed to create user").stack,
+      });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+      stack: error.stack,
+    });
   }
 });
+
 //update user
 export const updateUserProfile = asyncHandler(async (req, res) => {
   const parsed = updateUserSchema.safeParse(req.body);

@@ -1,5 +1,5 @@
 import asyncHandler from "express-async-handler";
-import { registerSchema } from "../schemas/authSchema";
+import { registerSchema } from "../schemas/authSchema.js";
 
 /**
  * Middleware to validate the registration request body.
