@@ -1,51 +1,56 @@
 import { loginSchema, registerSchema } from "../schemas/authSchema.js";
-// import {updateUserSchema} from "../schemas/updateUserSchema.js";
 import User from "../model/userModel.js";
 import asyncHandler from "express-async-handler";
+import bcrypt from "bcryptjs";
+import { UNAUTHORIZED } from "../constants/http.codes.js";
+import HttpError from "../utils/httpError.js";
 
-// Login
+// Login user
 export const userAuth = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
   const parsed = loginSchema.safeParse(req.body);
+  console.log("Login attempt for email:", email);  // Log email for debugging
 
-  if (!parsed.success) {
-    res.status(400);
-    throw new Error(parsed.error.issues[0].message);
+
+  // Find user by email
+  const user = await User.findOne({ email });
+
+  if (!user) {
+    throw new HttpError("Invalid email or password", UNAUTHORIZED); // Use throw to trigger the asyncHandler
   }
 
-  const { email, password } = parsed.data;
-  const user = await user.findOne({ email });
+  // Compare entered password with the hashed password in the database
+  const isMatch = await bcrypt.compare(password, user.password);
 
-  if (!User) {
-    res.status(401);
-    throw new Error("Invalid email or password");
-  }
-
-  const isMatch = await User.matchPassword(password);
   if (!isMatch) {
-    res.status(401);
-    throw new Error("Invalid email or password");
+    throw new HttpError("Invalid email or password", UNAUTHORIZED); // Use throw for error handling
   }
 
-  generateToken(res, User._id);
+  // Assuming you are generating a token here (e.g., JWT)
+  generateToken(res, user._id);
 
   res.status(200).json({
-    _id: User._id,
-    email: User.email,
-    username: User.username,
-    role: User.role,
-    status: User.status,
+    _id: user._id,
+    email: user.email,
+    username: user.username,
+    role: user.role,
+    status: user.status,
   });
 });
+
+
 
 // register user
 export const registerUser = asyncHandler(async (req, res) => {
   try {
+    console.log("Request body:", req.body);  // Log the request body to see what is being sent
+
     const parsed = registerSchema.safeParse(req.body);
+    console.log("Parsed data:", parsed); // Log the result of validation
 
     if (!parsed.success) {
       res.status(400).json({
         message: parsed.error.issues[0].message,
-        stack: new Error(parsed.error.issues[0].message).stack,
       });
       return;
     }
@@ -56,7 +61,6 @@ export const registerUser = asyncHandler(async (req, res) => {
     if (existingUser) {
       res.status(400).json({
         message: "Email is already in use",
-        stack: new Error("Email is already in use").stack,
       });
       return;
     }
@@ -87,6 +91,7 @@ export const registerUser = asyncHandler(async (req, res) => {
       });
     }
   } catch (error) {
+    console.error("Error during registration:", error);
     res.status(500).json({
       message: error.message,
       stack: error.stack,

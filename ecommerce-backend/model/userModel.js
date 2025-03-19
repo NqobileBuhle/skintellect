@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema(
     },
     jwt_secret: {
       type: String,
-      required: true, // Ensure this field is always present
+      required: false, // Ensure this field is always present
     },
     role: {
       type: String,
@@ -63,8 +63,8 @@ userSchema.methods.omitField = function (fields) {
 };
 
 // Method to compare entered password with the stored hash
-userSchema.methods.comparePasswords = async function (enteredPassword) {
-  return bcrypt.compare(enteredPassword, this.password);
+userSchema.methods.comparePassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
 };
 
 const User = mongoose.model("User", userSchema);

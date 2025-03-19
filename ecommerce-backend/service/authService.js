@@ -43,7 +43,7 @@ export const loginUser = async (credentials) => {
   // Check if user exists
   const user = await User.findOne({ email });
 
-  if (!user || !(await user.comparePasswords(password))) {
+  if (!user || !(await user.matchPasswords(password))) {
     return next(new HttpError("Incorrect email or password"), UNAUTHORIZED);
   }
   // Check if user exists
