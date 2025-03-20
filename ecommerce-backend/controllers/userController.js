@@ -4,29 +4,28 @@ import asyncHandler from "express-async-handler";
 import bcrypt from "bcryptjs";
 import { UNAUTHORIZED } from "../constants/http.codes.js";
 import HttpError from "../utils/httpError.js";
+import generateToken from "../utils/generateToken.js";
+
 
 // Login user
 export const userAuth = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
   const parsed = loginSchema.safeParse(req.body);
-  console.log("Login attempt for email:", email);  // Log email for debugging
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.errors });
+  }
 
+  const { email, password } = parsed.data;
 
-  // Find user by email
   const user = await User.findOne({ email });
-
   if (!user) {
-    throw new HttpError("Invalid email or password", UNAUTHORIZED); // Use throw to trigger the asyncHandler
+    throw new HttpError("Invalid email or password", UNAUTHORIZED);
   }
 
-  // Compare entered password with the hashed password in the database
   const isMatch = await bcrypt.compare(password, user.password);
-
   if (!isMatch) {
-    throw new HttpError("Invalid email or password", UNAUTHORIZED); // Use throw for error handling
+    throw new HttpError("Invalid email or password", UNAUTHORIZED);
   }
 
-  // Assuming you are generating a token here (e.g., JWT)
   generateToken(res, user._id);
 
   res.status(200).json({
@@ -40,38 +39,35 @@ export const userAuth = asyncHandler(async (req, res) => {
 
 
 
+
 // register user
 export const registerUser = asyncHandler(async (req, res) => {
   try {
-    console.log("Request body:", req.body);  // Log the request body to see what is being sent
+    console.log("Request body:", req.body); 
 
+    // Log the parsed data after validation
     const parsed = registerSchema.safeParse(req.body);
-    console.log("Parsed data:", parsed); // Log the result of validation
+    console.log("Parsed data:", parsed); 
 
     if (!parsed.success) {
-      res.status(400).json({
+      return res.status(400).json({
         message: parsed.error.issues[0].message,
       });
-      return;
     }
 
     const { email, username, password, role, status } = parsed.data;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      res.status(400).json({
+      return res.status(400).json({
         message: "Email is already in use",
       });
-      return;
     }
-
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
 
     const newUser = await User.create({
       email,
       username,
-      password: hashedPassword,
+      password, // Unhashed — hashing is handled in the model
       role,
       status,
     });
@@ -98,6 +94,7 @@ export const registerUser = asyncHandler(async (req, res) => {
     });
   }
 });
+
 
 //update user
 export const updateUserProfile = asyncHandler(async (req, res) => {
