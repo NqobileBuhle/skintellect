@@ -14,10 +14,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: [true, "Enter Password"],
     },
-    jwt_secret: {
-      type: String,
-      required: false, // Ensure this field is always present
-    },
+   
     role: {
       type: String,
       default: "User",
@@ -39,13 +36,13 @@ userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
     return next();
   }
-  try {
+  
     const salt = await bcrypt.genSalt(12);
     this.password = await bcrypt.hash(this.password, salt);
     next();
-  } catch (error) {
-    next(error); // Pass error to the next middleware
-  }
+  
+    
+  
 });
 
 // Method to omit specified fields from the user object

@@ -45,7 +45,7 @@ export const registerUser = asyncHandler(async (req, res) => {
   try {
     console.log("Request body:", req.body); 
 
-    // Log the parsed data after validation
+    // Wanted to see if password is hashed
     const parsed = registerSchema.safeParse(req.body);
     console.log("Parsed data:", parsed); 
 
